@@ -1,4 +1,4 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.manage;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;

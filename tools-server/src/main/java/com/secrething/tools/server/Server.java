@@ -1,7 +1,7 @@
 package com.secrething.tools.server;
 
-import com.secrething.tools.common.ProtocolDecoder;
-import com.secrething.tools.common.ProtocolEncoder;
+import com.secrething.tools.common.protocol.ProtocolDecoder;
+import com.secrething.tools.common.protocol.ProtocolEncoder;
 import com.secrething.tools.server.factory.ServerBootstrapFactory;
 import com.secrething.tools.server.handler.ServerSocketHandler;
 import io.netty.bootstrap.ServerBootstrap;

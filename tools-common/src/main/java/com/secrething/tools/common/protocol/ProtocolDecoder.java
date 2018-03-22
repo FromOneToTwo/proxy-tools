@@ -1,5 +1,6 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.protocol;
 
+import com.secrething.tools.common.contant.ConstantValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;

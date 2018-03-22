@@ -1,4 +1,4 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.protocol;
 
 /**
  * @author liuzz

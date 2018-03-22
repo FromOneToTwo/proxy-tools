@@ -1,6 +1,7 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.protocol;
 
 import com.alibaba.fastjson.JSONObject;
+import com.secrething.tools.common.manage.HttpPoolManage;
 
 /**
  * @author liuzz
@@ -31,7 +32,7 @@ public class RequestEntity {
      * 例
      * @see RequestEntity#methodName
      */
-    private Object[] params;
+    private Param[] params;
 
     public String getMethodName() {
         return methodName;
@@ -41,11 +42,11 @@ public class RequestEntity {
         this.methodName = methodName;
     }
 
-    public Object[] getParams() {
+    public Param[] getParams() {
         return params;
     }
 
-    public void setParams(Object[] params) {
+    public void setParams(Param[] params) {
         this.params = params;
     }
 

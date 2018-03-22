@@ -1,8 +1,8 @@
 package com.secrething.tools.client;
 
-import com.secrething.tools.common.MessageProtocol;
-import com.secrething.tools.common.RequestEntity;
-import com.secrething.tools.common.ResponseEntity;
+import com.secrething.tools.common.protocol.MessageProtocol;
+import com.secrething.tools.common.protocol.RequestEntity;
+import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.SerializeUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

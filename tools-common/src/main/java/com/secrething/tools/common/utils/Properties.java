@@ -1,4 +1,6 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.utils;
+
+import com.secrething.tools.common.contant.ConfigProp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +13,7 @@ import java.util.HashMap;
  * @author liuzengzeng
  * @create 2018/1/11
  */
-public final class OTAProperties extends HashMap<String, String> {
+public final class Properties extends HashMap<String, String> {
 
     public String getProperties(String key) {
         return get(key);

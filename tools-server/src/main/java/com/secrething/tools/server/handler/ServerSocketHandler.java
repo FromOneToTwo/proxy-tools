@@ -1,12 +1,12 @@
 package com.secrething.tools.server.handler;
 
-import com.secrething.tools.common.HttpPoolManage;
-import com.secrething.tools.common.MessageProtocol;
-import com.secrething.tools.common.RequestEntity;
-import com.secrething.tools.common.ResponseEntity;
+import com.secrething.tools.common.manage.HttpPoolManage;
+import com.secrething.tools.common.protocol.MessageProtocol;
+import com.secrething.tools.common.protocol.Param;
+import com.secrething.tools.common.protocol.RequestEntity;
+import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.MesgFormatter;
 import com.secrething.tools.common.utils.SerializeUtil;
-import com.secrething.tools.common.utils.TypeUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import net.sf.cglib.reflect.FastClass;
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 public class ServerSocketHandler extends ChannelInboundHandlerAdapter {
     private static final FastClass fastClass;
     private static final Logger logger = LoggerFactory.getLogger(ServerSocketHandler.class);
+
     static {
         Class<HttpPoolManage> clzz = HttpPoolManage.class;
         fastClass = FastClass.create(clzz);
@@ -34,17 +35,19 @@ public class ServerSocketHandler extends ChannelInboundHandlerAdapter {
         try {
             request = SerializeUtil.deserialize(inputMsg.getContent(), RequestEntity.class);
             respnseModel.setRequest(request);
-            Object[] params = request.getParams();
+            Param[] params = request.getParams();
+            Object[] rparams = new Object[params.length];
             Class[] paramTypes = new Class[params.length];
             for (int i = 0; i < params.length; i++) {
-                paramTypes[i] = TypeUtil.getBasicType(params[i].getClass());
+                paramTypes[i] = params[i].getParamType();
+                rparams[i] = params[i].getTarget();
             }
             logger.info(MesgFormatter.format("request={}", request.toString()));
             FastMethod method = fastClass.getMethod(request.getMethodName(), paramTypes);
-            result = method.invoke(null, params);
-            logger.info("result={}",result);
+            result = method.invoke(null, rparams);
+            logger.info("result={}", result);
         } catch (Throwable e) {
-            logger.error("",e);
+            logger.error("", e);
             respnseModel.setThrowable(e);
         }
         respnseModel.setResult(result);

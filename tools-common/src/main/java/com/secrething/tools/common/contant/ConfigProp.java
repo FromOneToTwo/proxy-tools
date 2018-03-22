@@ -1,4 +1,6 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.contant;
+
+import com.secrething.tools.common.utils.Properties;
 
 import java.io.InputStream;
 
@@ -7,11 +9,11 @@ import java.io.InputStream;
  * @create 2018/1/28
  */
 public class ConfigProp {
-    private static final OTAProperties OTA_PROP;
+    private static final Properties OTA_PROP;
 
     static {
-        OTA_PROP = new OTAProperties();
-        InputStream inputStream = OTAProperties.class.getResourceAsStream("/proxy-tools.properties");
+        OTA_PROP = new Properties();
+        InputStream inputStream = Properties.class.getResourceAsStream("/proxy-tools.properties");
         if (null != inputStream)
             try {
                 OTA_PROP.load(inputStream);

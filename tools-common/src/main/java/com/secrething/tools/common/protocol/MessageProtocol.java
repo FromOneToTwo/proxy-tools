@@ -1,4 +1,6 @@
-package com.secrething.tools.common;
+package com.secrething.tools.common.protocol;
+
+import com.secrething.tools.common.contant.ConstantValue;
 
 /**
  * @author liuzz

@@ -1,8 +1,8 @@
 package com.secrething.tools.client;
 
-import com.secrething.tools.common.RequestEntity;
-import com.secrething.tools.common.ResponseEntity;
 import com.secrething.tools.common.async.AbstractAdapterFuture;
+import com.secrething.tools.common.protocol.RequestEntity;
+import com.secrething.tools.common.protocol.ResponseEntity;
 
 /**
  * @author liuzz
