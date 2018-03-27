@@ -15,7 +15,7 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast("idleStateHandler",new IdleStateHandler(5, 0,300));
         ch.pipeline().addLast("mesgEncoder",new ProtocolEncoder());
         ch.pipeline().addLast("mesgDecoder",new ProtocolDecoder());
-        ch.pipeline().addLast("readWriteAllListener",new ServerHeartHandler(5));
+        ch.pipeline().addLast("readWriteAllListener",new ServerHeartHandler(1));
         ch.pipeline().addLast("serverSocketHandler",new ServerSocketHandler());
     }
 }

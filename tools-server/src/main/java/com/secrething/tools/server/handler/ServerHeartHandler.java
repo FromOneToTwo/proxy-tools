@@ -34,8 +34,11 @@ public class ServerHeartHandler extends SimpleChannelInboundHandler<MessageProto
             if (event.state() == IdleState.READER_IDLE) {
                 if (times < maxTimes) {
                     times++;
-                } else
+                } else{
+                    logger.info("five heartbeat cycles not read, so colse this channel");
                     ctx.close();
+                }
+
             }
         }
     }

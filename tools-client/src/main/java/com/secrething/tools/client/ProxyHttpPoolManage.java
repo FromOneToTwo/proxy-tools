@@ -35,8 +35,7 @@ public class ProxyHttpPoolManage {
         entity.setParams(params);
         entity.setMethodName(methodName);
         try {
-            Client client = new Client();
-            return client.sendRequest(entity);
+            return Client.sendRequest(entity);
         } catch (Exception e) {
             e.printStackTrace();
         }

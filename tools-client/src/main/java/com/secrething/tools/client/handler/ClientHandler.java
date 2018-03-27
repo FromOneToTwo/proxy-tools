@@ -3,40 +3,35 @@ package com.secrething.tools.client.handler;
 import com.secrething.tools.client.Client;
 import com.secrething.tools.client.MessageFuture;
 import com.secrething.tools.common.protocol.MessageProtocol;
-import com.secrething.tools.common.protocol.RequestEntity;
 import com.secrething.tools.common.protocol.ResponseEntity;
 import com.secrething.tools.common.utils.SerializeUtil;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.AttributeKey;
 
-import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author liuzz
  * @create 2018/3/14
  */
-public class ClientHandler extends ChannelInboundHandlerAdapter {
+public class ClientHandler extends SimpleChannelInboundHandler<MessageProtocol> {
+    private static final CopyOnWriteArrayList<Channel> CHANNELS = new CopyOnWriteArrayList<>();
+    private static final AttributeKey<Integer> CHANNEL_ID = AttributeKey.valueOf("channelId");
 
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        try {
-            MessageProtocol mesg = (MessageProtocol) msg;
-            if (mesg.getMesg_type() == MessageProtocol.PROXY){
-                ResponseEntity respnse = (ResponseEntity) SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
-                MessageFuture future = Client.futureConcurrentMap.get(mesg.getMessageUID());
-                if (null != future)
-                    future.done(respnse);
-            }
-
-        } finally {
-            ReferenceCountUtil.release(msg);
+    public void channelRead0(ChannelHandlerContext ctx, MessageProtocol mesg) throws Exception {
+        if (mesg.getMesg_type() == MessageProtocol.PROXY) {
+            ResponseEntity respnse = (ResponseEntity) SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
+            MessageFuture future = Client.futureConcurrentMap.get(mesg.getMessageUID());
+            if (null != future)
+                future.done(respnse);
         }
-
     }
 
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        ctx.close();
+
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {

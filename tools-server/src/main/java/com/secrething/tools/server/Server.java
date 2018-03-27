@@ -34,7 +34,7 @@ public class Server {
         }*/
         try {
             b.childHandler(new ServerInitializer()).option(ChannelOption.SO_BACKLOG, Integer.valueOf(128)).childOption(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
-            ChannelFuture f = b.bind(this.port).sync();
+            ChannelFuture f = b.bind("127.0.0.1",this.port).sync();
             logger.info("server started !");
             f.channel().closeFuture().sync();
         } finally {

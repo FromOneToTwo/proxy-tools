@@ -34,7 +34,7 @@ public class ServerSocketHandler extends SimpleChannelInboundHandler<MessageProt
             Object result = "request fail";
             RequestEntity request = null;
             ResponseEntity respnseModel = new ResponseEntity();
-            /*try {
+            try {
                 request = SerializeUtil.deserialize(inputMsg.getContent(), RequestEntity.class);
                 respnseModel.setRequest(request);
                 Param[] params = request.getParams();
@@ -51,7 +51,7 @@ public class ServerSocketHandler extends SimpleChannelInboundHandler<MessageProt
             } catch (Throwable e) {
                 logger.error("", e);
                 respnseModel.setThrowable(e);
-            }*/
+            }
             respnseModel.setResult(result);
             byte[] resb = SerializeUtil.serialize(respnseModel);
             MessageProtocol outMsg = new MessageProtocol(resb.length, resb);
