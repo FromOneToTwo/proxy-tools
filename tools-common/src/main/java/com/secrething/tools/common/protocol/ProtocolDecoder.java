@@ -24,6 +24,7 @@ public class ProtocolDecoder extends ByteToMessageDecoder {
                 int beginReader = buffer.readerIndex();
                 buffer.markReaderIndex();
                 if(ConstantValue.HEAD_DATA == buffer.readInt()) {
+                    int msgType = buffer.readInt();
                     byte[] uidBytes = new byte[36];
                     buffer.readBytes(uidBytes);
                     String messageUID = new String(uidBytes);
@@ -37,6 +38,7 @@ public class ProtocolDecoder extends ByteToMessageDecoder {
                     buffer.readBytes(data);
                     MessageProtocol protocol = new MessageProtocol(data.length, data);
                     protocol.setMessageUID(messageUID);
+                    protocol.setMesg_type(msgType);
                     out.add(protocol);
                     break;
                 }

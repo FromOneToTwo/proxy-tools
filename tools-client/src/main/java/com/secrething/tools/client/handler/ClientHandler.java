@@ -1,5 +1,7 @@
-package com.secrething.tools.client;
+package com.secrething.tools.client.handler;
 
+import com.secrething.tools.client.Client;
+import com.secrething.tools.client.MessageFuture;
 import com.secrething.tools.common.protocol.MessageProtocol;
 import com.secrething.tools.common.protocol.RequestEntity;
 import com.secrething.tools.common.protocol.ResponseEntity;
@@ -15,18 +17,17 @@ import java.util.UUID;
  * @create 2018/3/14
  */
 public class ClientHandler extends ChannelInboundHandlerAdapter {
-    private final MessageFuture messageFuture;
-
-    public ClientHandler(MessageFuture messageFuture) {
-        this.messageFuture = messageFuture;
-    }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
             MessageProtocol mesg = (MessageProtocol) msg;
-            ResponseEntity respnse = (ResponseEntity) SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
-            this.messageFuture.done(respnse);
-            ctx.close();
+            if (mesg.getMesg_type() == MessageProtocol.PROXY){
+                ResponseEntity respnse = (ResponseEntity) SerializeUtil.deserialize(mesg.getContent(), ResponseEntity.class);
+                MessageFuture future = Client.futureConcurrentMap.get(mesg.getMessageUID());
+                if (null != future)
+                    future.done(respnse);
+            }
+
         } finally {
             ReferenceCountUtil.release(msg);
         }
@@ -39,12 +40,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        RequestEntity request = messageFuture.getRequest();
-        byte[] content = SerializeUtil.serialize(request);
-        int contentLength = content.length;
-        MessageProtocol protocol = new MessageProtocol(contentLength, content);
-        protocol.setMessageUID(UUID.randomUUID().toString());
-        ctx.writeAndFlush(protocol);
+
     }
 
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {

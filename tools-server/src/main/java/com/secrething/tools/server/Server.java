@@ -1,15 +1,10 @@
 package com.secrething.tools.server;
 
-import com.secrething.tools.common.protocol.ProtocolDecoder;
-import com.secrething.tools.common.protocol.ProtocolEncoder;
 import com.secrething.tools.server.factory.ServerBootstrapFactory;
-import com.secrething.tools.server.handler.ServerSocketHandler;
+import com.secrething.tools.server.handler.ServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +33,7 @@ public class Server {
 
         }*/
         try {
-            b.childHandler(new ChannelInitializer<SocketChannel>() {
-                public void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new ChannelHandler[]{new ProtocolEncoder()});
-                    ch.pipeline().addLast(new ChannelHandler[]{new ProtocolDecoder()});
-                    ch.pipeline().addLast(new ChannelHandler[]{new ServerSocketHandler()});
-                }
-            }).option(ChannelOption.SO_BACKLOG, Integer.valueOf(128)).childOption(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
+            b.childHandler(new ServerInitializer()).option(ChannelOption.SO_BACKLOG, Integer.valueOf(128)).childOption(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
             ChannelFuture f = b.bind(this.port).sync();
             logger.info("server started !");
             f.channel().closeFuture().sync();

@@ -7,7 +7,11 @@ import com.secrething.tools.common.contant.ConstantValue;
  * @create 2018/3/14
  */
 public class MessageProtocol {
+    public static final int DEFAULT = 0;
+    public static final int PROXY = 1;
+    public static final int HEART = 2;
     private int head_data = ConstantValue.HEAD_DATA;
+    private int mesg_type = 0;//默认0,1代理,2心跳
     private String messageUID;
     private int contentLength;
     private byte[] content;
@@ -15,6 +19,18 @@ public class MessageProtocol {
     public MessageProtocol(int contentLength, byte[] content) {
         this.contentLength = contentLength;
         this.content = content;
+    }
+
+    public void setHead_data(int head_data) {
+        this.head_data = head_data;
+    }
+
+    public int getMesg_type() {
+        return mesg_type;
+    }
+
+    public void setMesg_type(int mesg_type) {
+        this.mesg_type = mesg_type;
     }
 
     public int getHead_data() {
