@@ -143,7 +143,7 @@ public class Client {
         int waitTime = 60000;
         String res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
         System.out.println(res);
-        Thread.sleep(12000);
+        Thread.sleep(18000);
         res = ProxyHttpPoolManage.sendJsonPostRequest(url, request, waitTime);
         System.out.println(res);
     }

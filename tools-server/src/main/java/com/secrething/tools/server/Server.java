@@ -24,17 +24,9 @@ public class Server {
     public void run() throws Exception {
         //暂时只用 nio方式吧
         ServerBootstrap b = ServerBootstrapFactory.newNioServerBootstrap();
-        /*if (Epoll.isAvailable() && ConstantValue.IS_LINUX) {
-            b = ServerBootstrapFactory.newEpollServerBootstrap();
-        } else {
-            if (!Epoll.isAvailable())
-                logger.warn("", Epoll.unavailabilityCause());
-            b = ServerBootstrapFactory.newNioServerBootstrap();
-
-        }*/
         try {
             b.childHandler(new ServerInitializer()).option(ChannelOption.SO_BACKLOG, Integer.valueOf(128)).childOption(ChannelOption.SO_KEEPALIVE, Boolean.valueOf(true));
-            ChannelFuture f = b.bind("127.0.0.1",this.port).sync();
+            ChannelFuture f = b.bind(this.port).sync();
             logger.info("server started !");
             f.channel().closeFuture().sync();
         } finally {
