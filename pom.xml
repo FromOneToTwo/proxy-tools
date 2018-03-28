@@ -14,9 +14,4 @@
         <module>tools-ws-server</module>
     </modules>
     <packaging>pom</packaging>
-    <parent>
-        <groupId>com.secrething</groupId>
-        <artifactId>secrething</artifactId>
-        <version>1.0.0</version>
-    </parent>
 </project>

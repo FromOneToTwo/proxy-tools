@@ -14,61 +14,75 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DataContainer<K, D> {
     private D data;
-    private Map<K, DataContainer<K, D>> children;
+    private final Map<K, DataContainer<K, D>> children;
     private final boolean concurrent;
     private Sync sync;
 
     private DataContainer(boolean concurrent) {
         this.concurrent = concurrent;
+        this.children = new HashMap<>();
         if (concurrent)
-            this.sync = new RealLock();
+            this.sync = lock();
         else
-            this.sync = new Sync() {
-                @Override
-                public void lockToRead() {
+            this.sync = unlock();
 
-                }
-
-                @Override
-                public void unlockToRead() {
-
-                }
-
-                @Override
-                public void lockToWrite() {
-
-                }
-
-                @Override
-                public void unlockToWrite() {
-
-                }
-            };
-        check();
     }
 
     private DataContainer(boolean concurrent, D data) {
-        this.concurrent = concurrent;
+        this(concurrent);
         this.data = data;
     }
 
 
-    private final static <K, D> DataContainer<K, D> createChild(boolean concurrent, D data) {
-        DataContainer<K, D> node = new DataContainer<>(concurrent, data);
+    private final <K, D> DataContainer<K, D> createChild(D data) {
+        DataContainer<K, D> node = new DataContainer<>(this.concurrent, data);
         return node;
     }
 
-    private final static <K, D> DataContainer<K, D> createParent(boolean concurrent) {
-        return new DataContainer<K, D>(concurrent);
+    private final <K, D> DataContainer<K, D> createParent() {
+        return new DataContainer<K, D>(this.concurrent);
     }
 
 
     public final D getData() {
-        return data;
+        return lockRead(new Handler<D>() {
+            @Override
+            public D readOrWrite() {
+                return data;
+            }
+        });
+
+    }
+
+    <T> T lockRead(Handler<T> handler) {
+        sync.locakRead();
+        try {
+            return handler.readOrWrite();
+        } finally {
+            sync.unlockRead();
+        }
+    }
+
+    static interface Handler<T> {
+        T readOrWrite();
+    }
+
+    <T> T lockWrite(Handler<T> handler) {
+        sync.lockWrite();
+        try {
+            return handler.readOrWrite();
+        } finally {
+            sync.unlockWrite();
+        }
     }
 
     public final Map<K, DataContainer<K, D>> getNodes() {
-        return children;
+        return lockRead(new Handler<Map<K, DataContainer<K, D>>>() {
+            @Override
+            public Map<K, DataContainer<K, D>> readOrWrite() {
+                return children;
+            }
+        });
     }
 
     public final static <K, D> DataContainer<K, D> createInstance() {
@@ -79,16 +93,16 @@ public class DataContainer<K, D> {
         return new DataContainer<K, D>(true);
     }
 
-    public final DataContainer<K, D> getNode(K... keys) {
+    public final DataContainer<K, D> getNode(final K... keys) {
         if (keysCantGet(keys))
             return null;
         if (keys.length == 1)
-            try {
-                sync.lockToRead();
-                return this.children.get(keys[0]);
-            } finally {
-                sync.unlockToRead();
-            }
+            return lockRead(new Handler<DataContainer<K, D>>() {
+                @Override
+                public DataContainer<K, D> readOrWrite() {
+                    return children.get(keys[0]);
+                }
+            });
         K key = keys[keys.length - 1];
         K[] parentKeys = Arrays.copyOf(keys, keys.length - 1);
         return getNodeSplitKey(key, parentKeys);
@@ -131,22 +145,26 @@ public class DataContainer<K, D> {
         return parentKeys;
     }
 
-    public final DataContainer<K, D> remove(K... keys) {
+    public final DataContainer<K, D> remove(final K... keys) {
         if (null == keys || keys.length < 1 || null == children)
             return null;
         else if (keys.length == 1) {
-            return this.children.remove(keys[0]);
+            return lockWrite(new Handler<DataContainer<K, D>>() {
+                @Override
+                public DataContainer<K, D> readOrWrite() {
+                    return children.remove(keys[0]);
+                }
+            });
         }
         K[] parent = selectParentKeys(keys.length - 1, keys);
-        DataContainer<K, D> node = getNode(parent);
-        return node == null ? null : node.children.remove(keys[keys.length - 1]);
+        final DataContainer<K, D> node = getNode(parent);
+        return lockWrite(new Handler<DataContainer<K, D>>() {
+            @Override
+            public DataContainer<K, D> readOrWrite() {
+                return node == null ? null : node.children.remove(keys[keys.length - 1]);
+            }
+        });
 
-    }
-
-    private void check() {
-        if (null != this.children)
-            return;
-        this.children = new HashMap<K, DataContainer<K, D>>();
     }
 
     private void putBase(K key, DataContainer<K, D> node, K... parentKeys) {
@@ -154,13 +172,12 @@ public class DataContainer<K, D> {
             throw new NullPointerException("key or node can't be null");
 
         DataContainer<K, D> next = this;
-        next.check();
         if (null != parentKeys && parentKeys.length > 0) {
             for (int i = 0; i < parentKeys.length; i++) {
                 K parentKey = parentKeys[i];
                 DataContainer curr = next.children.get(parentKey);
                 if (null == curr) {
-                    curr = createParent(next.concurrent);
+                    curr = next.createParent();
                     next.children.put(parentKey, curr);
                 }
                 next = curr;
@@ -170,7 +187,12 @@ public class DataContainer<K, D> {
     }
 
     private boolean hasChildren() {
-        return null != this.children && !this.children.isEmpty();
+        return lockRead(new Handler<Boolean>() {
+            @Override
+            public Boolean readOrWrite() {
+                return null != children && !children.isEmpty();
+            }
+        });
     }
 
     /**
@@ -199,40 +221,44 @@ public class DataContainer<K, D> {
 
     }
 
-    private void putSplitKey(K key, D data, K... parentKeys) {
-        try {
-            sync.lockToWrite();
-            DataContainer<K, D> node = createChild(this.concurrent, data);
-            putBase(key, node, parentKeys);
-        } finally {
-            sync.unlockToWrite();
-        }
-
-    }
-
-
-    private DataContainer<K, D> getNodeSplitKey(K key, K... parentKeys) {
-        try {
-            sync.lockToRead();
-            if (null != parentKeys && parentKeys.length > 0) {
-                DataContainer<K, D> node = findNode(parentKeys); //循环方式
-                if (null == node || null == node.children)
-                    return null;
-                return node.children.get(key);
+    private void putSplitKey(final K key, final D data, final K... parentKeys) {
+        final DataContainer<K, D> curr = this;
+        lockWrite(new Handler<Void>() {
+            @Override
+            public Void readOrWrite() {
+                DataContainer<K, D> node = curr.createChild(data);
+                putBase(key, node, parentKeys);
+                return null;
             }
-            return children.get(key);
-        } finally {
-            sync.unlockToRead();
-        }
-
-
+        });
     }
 
-    private D getNodeDataSplitKey(K key, K... parentKeys) {
-        DataContainer<K, D> node = getNodeSplitKey(key, parentKeys);
-        if (null == node)
-            return null;
-        return node.getData();
+
+    private DataContainer<K, D> getNodeSplitKey(final K key, final K... parentKeys) {
+        return lockRead(new Handler<DataContainer<K, D>>() {
+            @Override
+            public DataContainer<K, D> readOrWrite() {
+                if (null != parentKeys && parentKeys.length > 0) {
+                    DataContainer<K, D> node = findNode(parentKeys); //循环方式
+                    if (null == node || null == node.children)
+                        return null;
+                    return node.children.get(key);
+                }
+                return children.get(key);
+            }
+        });
+    }
+
+    private D getNodeDataSplitKey(final K key, final K... parentKeys) {
+        return lockRead(new Handler<D>() {
+            @Override
+            public D readOrWrite() {
+                DataContainer<K, D> node = getNodeSplitKey(key, parentKeys);
+                if (null == node)
+                    return null;
+                return node.getData();
+            }
+        });
     }
 
     private boolean keysCantPut(K... keys) {
@@ -244,13 +270,13 @@ public class DataContainer<K, D> {
     }
 
     interface Sync {
-        void lockToRead();
+        void locakRead();
 
-        void unlockToRead();
+        void unlockRead();
 
-        void lockToWrite();
+        void lockWrite();
 
-        void unlockToWrite();
+        void unlockWrite();
     }
 
     static class RealLock extends ReentrantReadWriteLock implements Sync {
@@ -258,28 +284,56 @@ public class DataContainer<K, D> {
         WriteLock writeLock = writeLock();
 
         @Override
-        public void lockToRead() {
+        public void locakRead() {
             readLock.lock();
         }
 
         @Override
-        public void unlockToRead() {
+        public void unlockRead() {
             readLock.unlock();
         }
 
         @Override
-        public void lockToWrite() {
+        public void lockWrite() {
             writeLock.lock();
         }
 
         @Override
-        public void unlockToWrite() {
+        public void unlockWrite() {
             writeLock.unlock();
         }
     }
+
     @Override
     public String toString() {
         return JSONObject.toJSONString(this);
     }
 
+    static Sync lock() {
+        return new RealLock();
+    }
+
+    static Sync unlock() {
+        return new Sync() {
+            @Override
+            public void locakRead() {
+
+            }
+
+            @Override
+            public void unlockRead() {
+
+            }
+
+            @Override
+            public void lockWrite() {
+
+            }
+
+            @Override
+            public void unlockWrite() {
+
+            }
+        };
+    }
 }

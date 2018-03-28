@@ -2,14 +2,14 @@
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 -->
     <property name="loggingRoot" value="/usr/local/tools/server"/>
-    <property name="loggingLevel" value="INFO"/>
+    <property name="loggingLevel" value="ERROR"/>
 
     <!-- [公共Appender] 控制台STDOUT -->
+    <!--%d日期格式；%p输出日志的优先级；%c所属类的全名；%l输出日志发生的位置，线程，代码行数；%m程序输出的信息；%n换行 -->
     <appender name="STDOUT-APPENDER" class="ch.qos.logback.core.ConsoleAppender">
         <level>${loggingLevel}</level>
         <encoder charset="UTF-8">
-            <!--%d日期格式；%p输出日志的优先级；%c所属类的全名；%l输出日志发生的位置，线程，代码行数；%m程序输出的信息；%n换行 -->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t] %c:%L - %m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t] %-17c{2}:%L - %m%n</pattern>
         </encoder>
     </appender>
 

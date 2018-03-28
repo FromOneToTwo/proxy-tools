@@ -6,9 +6,14 @@ import org.apache.commons.lang3.StringUtils;
  * @author liuzz
  * @create 2018/3/14
  */
-public class MesgFormatter {
+public abstract class MesgFormatter {
     private static final String PLACE_HOLDER = "{}";
     static int split = PLACE_HOLDER.length();
+
+    private MesgFormatter() {
+        throw new UnsupportedOperationException("");
+    }
+
     /**
      * 字符串拼接,拼接方式如同slf4j日志的输出方式
      * 例: format("h{}ll{}","e","o") return hello
