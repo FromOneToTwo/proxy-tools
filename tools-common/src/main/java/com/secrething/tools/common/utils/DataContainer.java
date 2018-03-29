@@ -45,11 +45,8 @@ public class DataContainer<K, D> {
 
 
     public final D getData() {
-        return lockRead(new Handler<D>() {
-            @Override
-            public D readOrWrite() {
-                return data;
-            }
+        return lockRead(() -> {
+            return data;
         });
 
     }
@@ -77,11 +74,8 @@ public class DataContainer<K, D> {
     }
 
     public final Map<K, DataContainer<K, D>> getNodes() {
-        return lockRead(new Handler<Map<K, DataContainer<K, D>>>() {
-            @Override
-            public Map<K, DataContainer<K, D>> readOrWrite() {
-                return children;
-            }
+        return lockRead(() -> {
+            return children;
         });
     }
 
@@ -158,12 +152,10 @@ public class DataContainer<K, D> {
         }
         K[] parent = selectParentKeys(keys.length - 1, keys);
         final DataContainer<K, D> node = getNode(parent);
-        return lockWrite(new Handler<DataContainer<K, D>>() {
-            @Override
-            public DataContainer<K, D> readOrWrite() {
-                return node == null ? null : node.children.remove(keys[keys.length - 1]);
-            }
-        });
+        return lockWrite(() -> {
+                    return node == null ? null : node.children.remove(keys[keys.length - 1]);
+                }
+        );
 
     }
 
@@ -187,12 +179,10 @@ public class DataContainer<K, D> {
     }
 
     private boolean hasChildren() {
-        return lockRead(new Handler<Boolean>() {
-            @Override
-            public Boolean readOrWrite() {
-                return null != children && !children.isEmpty();
-            }
-        });
+        return lockRead(() -> {
+                    return null != children && !children.isEmpty();
+                }
+        );
     }
 
     /**
@@ -335,5 +325,11 @@ public class DataContainer<K, D> {
 
             }
         };
+    }
+
+    public static void main(String[] args) {
+        DataContainer dataContainer = DataContainer.createInstance();
+        dataContainer.data = 1;
+        System.out.println(dataContainer.getData());
     }
 }

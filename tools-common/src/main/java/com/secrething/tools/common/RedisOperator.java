@@ -82,8 +82,8 @@ public class RedisOperator {
         public void onMessage(String channel, String message);
     }
 
-    public static abstract class RedisCallback<K> {
-        public abstract K call(Jedis jedis);
+    public static interface RedisCallback<K> {
+        K call(Jedis jedis);
     }
 
     <K> K callable(RedisCallback<K> callback) {
@@ -107,12 +107,10 @@ public class RedisOperator {
     private void processMessage(final String channel, final Listener listener, final String message, ExecutorService executorService) {
         try {
             if (null != executorService)
-                executorService.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onMessage(channel, message);
-                    }
-                });
+                executorService.execute(() -> {
+                            listener.onMessage(channel, message);
+                        }
+                );
             else
                 listener.onMessage(channel, message);
         } catch (Exception e) {
@@ -163,51 +161,43 @@ public class RedisOperator {
     public void syncSubcribe(final String channel, final Listener listener) {
         subscribe(channel, listener, null);
     }
-    public void asyncSubcribe(final String channel, final Listener listener,final ExecutorService executorService){
+
+    public void asyncSubcribe(final String channel, final Listener listener, final ExecutorService executorService) {
         subscribe(channel, listener, executorService);
     }
 
     private void subscribe(final String channel, final Listener listener, final ExecutorService executorService) {
         unsubscribe(channel);
 
-        new Thread() {
+        new Thread(() -> {
+            JedisPubSub jedisPubSub = createJedisPubSub(channel, listener, executorService);
+            if (jedisPubSub == null) {
+                log.warn("subscribe error! create JedisPubSub fail! channel:{}", channel);
+                return;
+            }
 
-            @Override
-            public void run() {
-                JedisPubSub jedisPubSub = createJedisPubSub(channel, listener, executorService);
-                if (jedisPubSub == null) {
-                    log.warn("subscribe error! create JedisPubSub fail! channel:{}", channel);
-                    return;
-                }
+            while (true) { //短线或自动重连必须的
+                log.info("begin subscribe, channel:" + channel);
 
-                while (true) { //短线或自动重连必须的
-                    log.info("begin subscribe, channel:" + channel);
-
-                    Jedis jedis = null;
-                    try {
-                        jedis = pool.getResource();
-                        jedis.subscribe(jedisPubSub, channel); //这里会阻塞，直到异常或unsubscribe
-                        log.info("unsubscribe, channel:{}", channel);
-                        break;
-                    } catch (final Exception e) {
-                        log.warn("subscribe catch exception, channel:{}", channel, e);
-                    } finally {
-                        if (null != jedis)
-                            jedis.close();
-                    }
+                Jedis jedis = null;
+                try {
+                    jedis = pool.getResource();
+                    jedis.subscribe(jedisPubSub, channel); //这里会阻塞，直到异常或unsubscribe
+                    log.info("unsubscribe, channel:{}", channel);
+                    break;
+                } catch (final Exception e) {
+                    log.warn("subscribe catch exception, channel:{}", channel, e);
+                } finally {
+                    if (null != jedis)
+                        jedis.close();
                 }
             }
 
-        }.start();
+        }).start();
     }
 
     public Long publish(final String channel, final String message) {
-        return callable(new RedisCallback<Long>() {
-            @Override
-            public Long call(Jedis jedis) {
-                return jedis.publish(channel, message);
-            }
-        });
+        return callable((Jedis jedis) -> jedis.publish(channel, message));
     }
 
 }
